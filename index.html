@@ -1293,6 +1293,8 @@ function mountAR(
           material="
             src: #introVideo;
             shader: flat;
+            repeat: 1 0.891667;
+            offset: 0 0.054167;
           "
 
         ></a-plane>
@@ -1323,6 +1325,8 @@ function mountAR(
           material="
             src: #loopVideo;
             shader: flat;
+            repeat: 1 0.891667;
+            offset: 0 0.054167;
           "
 
         ></a-plane>
@@ -1370,28 +1374,6 @@ function mountAR(
     );
 
 
-
-  // 只調整影片顯示範圍：9:16 置中裁成悠遊卡 54:85.6。
-  // 裁掉影片上下各約 5.42%，不更動影片本身或播放流程。
-  function cropVideoPlane(plane) {
-    const applyCrop = () => {
-      const mesh = plane.getObject3D("mesh");
-      const uv = mesh?.geometry?.attributes?.uv;
-      if (!uv || uv.userData?.cardCropped) return;
-      const crop = (1 - (85.6 / 54) / (16 / 9)) / 2;
-      for (let i = 0; i < uv.count; i++) {
-        uv.setY(i, crop + uv.getY(i) * (1 - 2 * crop));
-      }
-      uv.needsUpdate = true;
-      uv.userData = { cardCropped: true };
-    };
-    plane.addEventListener("object3dset", applyCrop);
-    plane.addEventListener("loaded", applyCrop);
-    applyCrop();
-  }
-
-  cropVideoPlane(introPlane);
-  cropVideoPlane(loopPlane);
 
   introVideo.muted =
     false;
