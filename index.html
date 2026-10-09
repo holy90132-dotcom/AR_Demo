@@ -1287,7 +1287,7 @@ function mountAR(
           "
 
           height="
-            0.5625
+            1.585185
           "
 
           material="
@@ -1313,7 +1313,7 @@ function mountAR(
           "
 
           height="
-            0.5625
+            1.585185
           "
 
           visible="
@@ -1368,6 +1368,33 @@ function mountAR(
     document.getElementById(
       "loopPlane"
     );
+
+
+  // 9:16 直式影片，以悠遊卡 54:85.6 比例置中裁切。
+  // MindAR 以辨識圖寬度為 1，平面高度需與 target.jpg 比例一致。
+  const CARD_ASPECT = 54 / 85.6;
+  const VIDEO_ASPECT = 9 / 16;
+  const visibleHeight = VIDEO_ASPECT / CARD_ASPECT;
+  const cropY = (1 - visibleHeight) / 2;
+
+  function applyCenteredVideoCrop(plane) {
+    const material = plane.getObject3D("mesh")?.material;
+    const texture = material?.map;
+    if (!texture) return;
+    texture.repeat.set(1, visibleHeight);
+    texture.offset.set(0, cropY);
+    texture.needsUpdate = true;
+  }
+
+  [introPlane, loopPlane].forEach(plane => {
+    plane.addEventListener("materialtextureloaded", () => {
+      applyCenteredVideoCrop(plane);
+    });
+    plane.addEventListener("object3dset", () => {
+      applyCenteredVideoCrop(plane);
+    });
+    applyCenteredVideoCrop(plane);
+  });
 
 
 
