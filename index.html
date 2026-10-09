@@ -1370,32 +1370,29 @@ function mountAR(
     );
 
 
-  // 9:16 直式影片，以悠遊卡 54:85.6 比例置中裁切。
-  // MindAR 以辨識圖寬度為 1，平面高度需與 target.jpg 比例一致。
+  // 只裁切平面的 UV 座標，不修改影片貼圖本身，避免干擾影片更新。
   const CARD_ASPECT = 54 / 85.6;
   const VIDEO_ASPECT = 9 / 16;
   const visibleHeight = VIDEO_ASPECT / CARD_ASPECT;
   const cropY = (1 - visibleHeight) / 2;
 
   function applyCenteredVideoCrop(plane) {
-    const material = plane.getObject3D("mesh")?.material;
-    const texture = material?.map;
-    if (!texture) return;
-    texture.repeat.set(1, visibleHeight);
-    texture.offset.set(0, cropY);
-    texture.needsUpdate = true;
+    const mesh = plane.getObject3D("mesh");
+    const uv = mesh?.geometry?.attributes?.uv;
+    if (!uv || mesh.userData.centerCropApplied) return;
+    // A-Frame plane 的 UV：上方 v=1，下方 v=0。
+    for (let i = 0; i < uv.count; i++) {
+      const originalV = uv.getY(i);
+      uv.setY(i, cropY + originalV * visibleHeight);
+    }
+    uv.needsUpdate = true;
+    mesh.userData.centerCropApplied = true;
   }
 
   [introPlane, loopPlane].forEach(plane => {
-    plane.addEventListener("materialtextureloaded", () => {
-      applyCenteredVideoCrop(plane);
-    });
-    plane.addEventListener("object3dset", () => {
-      applyCenteredVideoCrop(plane);
-    });
+    plane.addEventListener("object3dset", () => applyCenteredVideoCrop(plane));
     applyCenteredVideoCrop(plane);
   });
-
 
 
   introVideo.muted =
